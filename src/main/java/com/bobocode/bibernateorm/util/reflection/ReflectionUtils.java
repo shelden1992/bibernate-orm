@@ -1,8 +1,6 @@
 package com.bobocode.bibernateorm.util.reflection;
 
-import com.bobocode.bibernateorm.annotation.Column;
-import com.bobocode.bibernateorm.annotation.Id;
-import com.bobocode.bibernateorm.annotation.Table;
+import com.bobocode.bibernateorm.annotation.*;
 import com.bobocode.bibernateorm.exception.AnnotationException;
 import com.bobocode.bibernateorm.exception.ReflectionException;
 import lombok.NonNull;
@@ -13,6 +11,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -30,6 +29,12 @@ public class ReflectionUtils {
 
     public static <T> Map<String, Object> getColumnNameValues(@NonNull T entity) {
         return Stream.of(entity.getClass().getDeclaredFields()).collect(Collectors.toMap(ReflectionUtils::getColumnName, field -> getFieldValue(field, entity)));
+    }
+
+    public static <T> Map<String, Object> getColumnNameValuesWithOutId(@NonNull T entity) {
+        Map<String, Object> collect = Stream.of(entity.getClass().getDeclaredFields()).collect(HashMap::new, (m, field) -> m.put(getColumnName(field).toLowerCase(), getFieldValue(field, entity)), HashMap::putAll);
+        collect.remove("id");
+        return collect;
     }
 
 
@@ -82,6 +87,27 @@ public class ReflectionUtils {
             return ids.get(0);
 
         });
+    }
+
+    public static <T> Field getIdField(@NonNull T type) {
+        return (Field) getAnnotationValue(type.getClass(), clazz -> {
+            var ids = Arrays.stream(clazz.getDeclaredFields()).filter(field -> nonNull(field.getAnnotation(Id.class))).toList();
+
+            if (ids.isEmpty()) {
+                LOG.error("Annotation \"Id\" not found in type" + type.getClass());
+                throw new AnnotationException("Annotation \"Id\" not found in type" + type.getClass());
+            }
+
+            if (ids.size() != 1) {
+                throw new AnnotationException("Annotation \"Id\" have be unique.");
+            }
+            return ids.get(0);
+
+        });
+    }
+
+    public static GenerationType getGeneratedType(Field id) {
+        return id.getAnnotation(GeneratedValue.class).type();
     }
 
     public static <T> void setFieldValue(final Field field, final Object value, final T entity) {

@@ -1,8 +1,6 @@
 package com.bobocode.entity;
 
-import com.bobocode.bibernateorm.annotation.Column;
-import com.bobocode.bibernateorm.annotation.Id;
-import com.bobocode.bibernateorm.annotation.Table;
+import com.bobocode.bibernateorm.annotation.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -17,6 +15,7 @@ import lombok.ToString;
 @ToString
 public class Person {
     @Id
+    @GeneratedValue(type = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
     @Column(name = "first_name")

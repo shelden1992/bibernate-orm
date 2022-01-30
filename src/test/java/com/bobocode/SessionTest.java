@@ -8,7 +8,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.postgresql.ds.PGSimpleDataSource;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import java.util.function.Consumer;
 
@@ -92,6 +91,28 @@ class SessionTest {
 
         assertNotNull(findPerson);
         assertEquals(findPerson.getId(), 2L);
+    }
+
+    @org.junit.jupiter.api.Test
+    void shouldSavePersonIdentifyGenerate() {
+        var personWithId2 = new Person();
+        personWithId2.setFirstName("Dmytii");
+        personWithId2.setLastName("Second id");
+
+        session.persist(personWithId2);
+        session.flush();
+
+        var personWithId3 = new Person();
+        personWithId3.setFirstName("Denys");
+        personWithId3.setLastName("Third id");
+
+        session.persist(personWithId3);
+        session.flush();
+
+        var findPerson = session.find(Person.class, 3L);
+
+        assertNotNull(findPerson);
+        assertEquals(findPerson.getId(), 3L);
     }
 
     @org.junit.jupiter.api.Test

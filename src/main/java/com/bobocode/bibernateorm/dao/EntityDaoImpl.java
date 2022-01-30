@@ -1,6 +1,7 @@
 package com.bobocode.bibernateorm.dao;
 
 import com.bobocode.bibernateorm.KeyTypeId;
+import com.bobocode.bibernateorm.annotation.GenerationType;
 import com.bobocode.bibernateorm.exception.SqlException;
 import com.bobocode.bibernateorm.util.reflection.FieldNameValue;
 import org.apache.logging.log4j.LogManager;
@@ -12,6 +13,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -67,7 +69,16 @@ public record EntityDaoImpl(DataSource dataSource) implements EntityDao {
 
     @Override
     public <T> void saveEntity(T entity) {
-        var columnNameValues = getColumnNameValues(entity);
+        var id = getIdField(entity);
+
+        GenerationType generationType = getGeneratedType(id);
+
+        final Map<String, Object> columnNameValues;
+
+        switch (generationType) {
+            case IDENTITY -> columnNameValues = getColumnNameValuesWithOutId(entity);
+            default -> columnNameValues = getColumnNameValues(entity);
+        }
 
         var sql = saveEntityQuery(entity, columnNameValues.keySet());
         LOG.debug("Method saveEntity. Sql query = " + sql);
